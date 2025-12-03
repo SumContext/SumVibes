@@ -1,6 +1,8 @@
 {
   "projectConfig": {
     "maxSupportedFileSize": 40960,
+    "JuniorLLM": "gpt-oss-20b",
+    "SeniorLLM": "gpt-oss-20b",
     "supportedFileTypes": [
       "c",
       "py",

@@ -8,7 +8,10 @@
 # modify, merge, publish, distribute, sublicense, and/or sell  copies
 # of the Software, and to permit persons  to  whom  the  Software  is
 # furnished to do so.
-# 
+#
+# The above copyright notice and  this  permission  notice  shall  be
+# included in all copies or substantial portions of the Software.
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT  WARRANTY  OF  ANY  KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES  OF
 # MERCHANTABILITY,   FITNESS   FOR   A   PARTICULAR    PURPOSE    AND
@@ -18,9 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE  SOFTWARE  OR  THE  USE  OR  OTHER
 # DEALINGS IN THE SOFTWARE.
 #
-##########################License above is Equivalent to Public Domain
+######################################################################
 
-#_____________________________________________________________Library Imports
 import re, os, sys, subprocess, threading, optparse, math, random, readline
 rows, columns = os.popen('stty size', 'r').read().split() #http://stackoverflow.com/questions/566746#943921
 
