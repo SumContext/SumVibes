@@ -23,7 +23,7 @@
 #
 ######################################################################
 
-
+from datetime import datetime, timezone
 import subprocess, threading, re, os, sys, inspect, shutil, argparse, random, math, json, fnmatch, requests
 rows, columns = os.popen('stty size', 'r').read().split() #http://goo.gl/cD4CFf
 #"pydoc -p 1234" will start a HTTP server on port 1234, allowing you  to  browse
@@ -42,14 +42,14 @@ with open("secret.key", "r") as f:
 def file2sum(file_path):
     # 1. Validate Input
     if not os.path.exists(file_path):
-        return f"Error: File {file_path} not found."
+        return f"Error: File {file_path} not found.", True # <--- CHANGED (Added True)
 
     # 2. Load File Content
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             code_content = f.read()
     except Exception as e:
-        return f"Error reading file: {str(e)}"
+        return f"Error reading file: {str(e)}", True # <--- CHANGED (Added True)
 
     # 3. Load Config (for Model Name)
     # We look for cog_cfg.json in the same directory as the script
@@ -103,7 +103,8 @@ def file2sum(file_path):
         response.raise_for_status()
         data = response.json()
     except Exception as e:
-        return f"API Error: {str(e)}"
+        return f"API Error: {str(e)}", True # <--- CHANGED (Added True)
+
     # 6. Parse and Format Output
     try:
         # Extract the assistant's message
@@ -112,37 +113,14 @@ def file2sum(file_path):
 
         # Trim markdown fences if present
         if content.startswith("```") and content.endswith("```"):
-            # remove the outer triple backticks and optional language tag
             lines = content.splitlines()
             if len(lines) >= 2:
                 content = "\n".join(lines[1:-1]).strip()
 
-        return content
+        return content, False # <--- CHANGED (Added False)
 
     except (KeyError, IndexError) as e:
-        return f"Error parsing JSON response: {str(e)}"
-
-#     # 6. Parse and Format Output
-#     try:
-#         # Extract the assistant's message
-#         message = data['choices'][0]['message']
-#         content = message.get('content', '').strip()
-#         
-#         # Extract reasoning (based on your log file structure)
-#         reasoning = message.get('reasoning', 'Analysis complete.')
-#         
-#         # Construct the simulated interaction string
-#         # Note: We escape the backticks for the output string
-#         output_str = (
-#             # f"User: Please provide a markdown code escaped 111 chars or less summary of `{os.path.basename(file_path)}`.\n\n"
-#             # f"Assistant:\n"
-#             # f"<think>\n{reasoning}\n</think>\n\n"
-#             f"```\n{content}\n```"
-#         )
-#         return output_str
-# 
-#     except (KeyError, IndexError) as e:
-#         return f"Error parsing JSON response: {str(e)}"
+        return f"Error parsing JSON response: {str(e)}", True # <--- CHANGED (Added True)
 
 
 def load_ignore_patterns(dir_path: str):
@@ -249,7 +227,8 @@ def ftree2sums(ftree, parent_path=""):
         files.append({
             "name": rel_path,
             "sum": False,
-            "time": False
+            "time": False,
+            "error": False # <--- ADDED
         })
     return files
 
@@ -280,16 +259,23 @@ def flistwithsums(flist, dir_path: str):
         use_cached = False
         if fname in cached:
             cached_entry = cached[fname]
-            if cached_entry.get("time") and cached_entry["time"] >= mtime:
-                # cached summary is newer than file modification
+            # MODIFIED: Check if time is valid AND ensure the previous entry was not an error
+            if (cached_entry.get("time") and 
+                cached_entry["time"] >= mtime and 
+                not cached_entry.get("error", False)):
+                
+                # cached summary is newer and valid
                 entry["sum"] = cached_entry["sum"]
                 entry["time"] = cached_entry["time"]
+                entry["error"] = cached_entry.get("error", False)
                 use_cached = True
 
         if not use_cached:
-            summary = file2sum(full_path)
+            summary, is_error = file2sum(full_path)
             entry["sum"] = summary
-            entry["time"] = int(time.time())
+            entry["error"] = is_error
+            # MODIFIED: Explicit UTC timestamp
+            entry["time"] = int(datetime.now(timezone.utc).timestamp())
 
         updated.append(entry)
 
