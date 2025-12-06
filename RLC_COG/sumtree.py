@@ -236,6 +236,56 @@ def ftree2sums(ftree, parent_path=""):
         })
     return files
 
+import time
+
+def flistwithsums(flist, dir_path: str):
+    """
+    Update flist with summaries for each file.
+    Uses tree.sums.json if available for cached results.
+    """
+    sums_path = os.path.join(dir_path, "tree.sums.json")
+    cached = {}
+    if os.path.isfile(sums_path):
+        try:
+            with open(sums_path, "r", encoding="utf-8") as f:
+                cached_list = json.load(f)
+                # convert to dict keyed by name
+                cached = {entry["name"]: entry for entry in cached_list}
+        except Exception:
+            pass
+
+    updated = []
+    for entry in flist:
+        fname = entry["name"]
+        full_path = os.path.join(dir_path, fname.lstrip("./"))
+        mtime = os.path.getmtime(full_path) if os.path.isfile(full_path) else 0
+
+        use_cached = False
+        if fname in cached:
+            cached_entry = cached[fname]
+            if cached_entry.get("time") and cached_entry["time"] >= mtime:
+                # cached summary is newer than file modification
+                entry["sum"] = cached_entry["sum"]
+                entry["time"] = cached_entry["time"]
+                use_cached = True
+
+        if not use_cached:
+            summary = file2sum(full_path)
+            entry["sum"] = summary
+            entry["time"] = int(time.time())
+
+        updated.append(entry)
+
+    # Save updated list back to tree.sums.json
+    try:
+        with open(sums_path, "w", encoding="utf-8") as f:
+            json.dump(updated, f, indent=2)
+    except Exception as e:
+        print(f"Warning: could not save sums file: {e}")
+
+    return updated
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate JSON tree of a directory.")
     parser.add_argument("directory", help="Path to the directory")
@@ -246,6 +296,11 @@ def main():
     flist = ftree2sums(ftree)
     print(json.dumps(flist, indent=2))
     print(ftree2bashtree(ftree))
+    print(file2sum(cwfd + "/RLC_COG.ui"))
+    # flist = ftree2sums(flist)
+    # enrich with summaries (using cache if available)
+    flist = flistwithsums(flist, args.directory)
+    print(json.dumps(flist, indent=2))
 
 if __name__ == "__main__":
     main()

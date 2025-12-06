@@ -1,3 +1,6 @@
+We need to get flistwithsums() working.
+We also need to check for a file tree.sums.json in the args.directory. as an extra source for any sums that may have already been created.
+
 
 ### Currently works!
 `file2sum()`
