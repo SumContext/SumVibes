@@ -32,6 +32,14 @@ run_and_log() { local script="$1" local logfile="$2" local devshell="$3"
     utcupdate
     echo "Running $script at $utc"
 
+    if command -v tree >/dev/null 2>&1; then
+#         sumtree
+        tree
+    else
+        echo "github.com/SumContext/sumtree not installed using tree instead"
+        tree
+    fi
+
     if [[ -n "$devshell" ]]; then
         # Run inside nix-shell if devshell path is provided
         nix-shell "$devshell" --run "bash $script" 2>&1 | tee "$logfile"
@@ -74,16 +82,19 @@ fi
 echo $owd
 
 
+owd="$owd/RLC_COG"
+
 # Return to main dir
 cd "$owd"
+echo rlcdir
+pwd
+
 
 # Example call: run test.sh inside nix-shell, log to test_output.log
 # run_and_log "$owd/test.sh" "$owd/test_output.log" "$owd/devShells.nix"
-# run_and_log "$owd/RLC_COG.sh" "$owd/test_output.log" "$owd/devShells.nix"
-run_and_log "$owd/dir_sum.sh" "$owd/test_output.log" "$owd/devShells.nix"
+run_and_log "$owd/RLC_COG.sh" "$owd/test_output.log" "$owd/devShells.nix"
 
-combine_files concat.md ./sumtree.md ./sumtree.py ./cog_cfg.json ./test_output.log
-# combine_files concat.md ./devShells.nix ./RLC_COG.py ./RLC_COG.ui ./test_output.log
+combine_files concat.md ./devShells.nix ./test_output.log ./RLC_COG.py ./RLC_COG.ui
 
 exit
 

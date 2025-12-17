@@ -3,7 +3,7 @@
 
 let
   # 1. Define a custom Python instance with OVERRIDES.
-  myPython = pkgs.python312.override {
+  myPython = pkgs.python313.override {
     packageOverrides = final: prev: {
       # Existing overrides...
       torch = prev.torch.override { vulkanSupport = true; };
