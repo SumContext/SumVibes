@@ -21,8 +21,8 @@
 # DEALINGS IN THE SOFTWARE.
 #
 ######################################################################
-utcupdate() { utc=$(date -u "+%Y.%m.%dT%H.%M.%SZ"); }
-utcupdate  #UTC Time (filename safe)
+utcupdate() { utc=$(date -u "+%Y.%m.%dT%H.%M.%SZ"); } #UTC Time (filename safe)
+utcupdate
 owd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #Path to THIS script.
 
 
