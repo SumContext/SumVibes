@@ -89,46 +89,12 @@ When a patch is a applied it will create a new branch, possibly new issues
 
 In the event the issue isn't solved, 
 
-----------------------------------------------------------------------
 
-`concat_macro.sh` file:
+--------------------
 
-```
-run_and_log() { # run a script $1 and log to output $2
-    utcupdate
-    echo "Running $1 at $utc"
-    sumtree
-    nix-shell "$3" --run "bash $1" 2>&1 | tee "$2"
-    utcupdate
-    echo "Completed $1 at $utc"
-}
+# Issue Design Patch Liasons - IL DL PL
 
-combine_files() {
-  shift
-  rm $1
-  # Loop through remaining args (the input files)
-  for file in "$@"; do
-    filename=$(basename "$file")
-    # Print header with 10 # chars before and after
-    {
-      echo -e "#####\nFile: $filename\n######\n\n\`\`\`"
-      # Escape triple backticks in file content
-      sed 's/```/\\```/g' "$file"
-      echo -e "\n\`\`\`"
-    } >> "$1"
-  done
-}
-
-cd $owd
-
-run_and_log "./issue67.sh" "./issue67.log" "./devShells.nix"
-
-combine_files concat67.md ./devShells.nix ./issue67.log ./test67.py ./issue67.md
-```
-
-## PDD Liaisons
-
-As a liaison between a large set of senior & junior developers, 
+Liaison between a large set of senior & junior developers, 
 managing a context-management-workflow, where we have several tasks 
 that constitute the job.
 
@@ -161,18 +127,72 @@ Our job as an assistant is to make sure the above tasks will be
 running as needed according to any version changes requested by 
 developers.
 
-----------------------------------------------------------------------
+`concat_macro.sh` file:
 
-# PDD - Plan Design Develop
+```
+#!/usr/bin/env bash
+run_and_log() { # run a script $1 and log to output $2
+    utcupdate
+    echo "Running $1 at $utc"
+    sumtree
+    nix-shell "$3" --run "bash $1" 2>&1 | tee "$2"
+    utcupdate
+    echo "Completed $1 at $utc"
+}
 
-There are 3 Liaisons, 1 each for plan design development.
+combine_files() {
+  shift
+  rm $1
+  # Loop through remaining args (the input files)
+  for file in "$@"; do
+    filename=$(basename "$file")
+    # Print header with 10 # chars before and after
+    {
+      echo -e "###\nFile: $filename\n####\n\n\`\`\`"
+      # Escape triple backticks in file content
+      sed 's/```/\\```/g' "$file"
+      echo -e "\n\`\`\`"
+    } >> "$1"
+  done
+}
+```
 
-*Plan Liaison* manages review, requirements, and readme. They are in 
-charge of deciding status of the project or subtask, and asking the 
-user/client for more information if necessary. they are also in charge 
-of benchmarks and tests.
+`gen_VLORI_issue67.sh` file:
+```
+#!/usr/bin/env bash
+owd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #Path to THIS script.
+source "${owd}/concat_macro.sh"
+cd $owd
+run_and_log "./issue67.sh" "./issue67.log" "./devShells.nix"
+combine_files concat67.md ./devShells.nix ./issue67.log ./test67.py ./issue67.md
+```
 
-*Design Liaison* manages dependency resolution and timing this 
+--------------------
+
+# VLORI Developer Issue Design Patch Liasons - IL DL PL
+
+### IL - "Issue/Plan Liaison"
+decides project status, dispatches new issues to create benchmarks and tests.
+manages, requirements, and readme. asks questions to user and developers
+
+in charge of QC for the planning & requirements. They may prepare 
+question the User in regards to requirements / and propagate 
+senior-dev questions, back to the user and/or parent task. 
+
+`issue.md` - the jury; `issue.sh` - the executioner;
+`issue.log` log issue output after execution of `issue.sh`;
+*IL* - "the Judge" When they decide project status is complete, the cycle halts.
+
+Access privileges include: log_issue_output issue.md readme and other docs 
+dev-questions.md user-questions.md old-questions.md
+
+### *DL* - "Design Liaison"
+
+Design manages new issues and completed subtask procurement, they decide
+when the environment is suitable for the software to run in is acceptable.
+and manage pertinent files, to include in the VLORI for the Senior-Dev.
+
+manages dependency resolution and timing this 
 includes issuing new subtasks and waiting for them to complete before 
 moving to Dev-stage the junior dev will act as a senior-dev until all 
 libraries are installed, after dependencies are resolved they are to 
@@ -182,28 +202,72 @@ IF dependencies or other libs or pathing issues or system issues were
 solved etc. from subtasks The VLORI will be recreated at this point by 
 running RLC. note this happens in a subtask.
 
-At this point a junior dev will make a list of candidates of files 
-causing the issue by processing the VLORI. SumIssueSumFile() will be 
-recursively run on files starting with the VLORI, and output a tree 
-that may contain duplicates.
+If there were no plan or design changes and there are no library or 
+system issues issue.log is not regenerated and the VLORI Dev does 
+nothing. We skip the next step and go straight to the Senior-Dev.
 
-*Senior Developer* after the VLORI is failing not because of 
-dependencies or other libraries not passing tests, list of files 
-created by the *Design Liaison* along with the VLORI will be sent to 
-the Senior-Dev to suggest possible solutions.
+### *VLORI Developer*
 
-*Development Liaison* processes the output of the senior dev, and 
-prepares a patch to be applied to the project. They are in charge of 
-applying edits as described by the senior dev.
+`issue.log` is regenerated with `run_and_log "./issue67.sh" "./issue67.log" "./devShells.nix"`
 
-The VLORI will be recreated at this point by running RLC
+SumIssueSumFile() is run on `issue.md` `issue.log`
 
 At this point a junior dev will make a list of candidates of files 
-causing the issue by processing the VLORI. SumIssueSumFile() will be 
-recursively run on files starting with the VLORI, and output a tree 
-that may contain duplicates.
+causing the issue by processing the `issue.log`. SumIssueSumFile() 
+will be recursively run on files starting with the `issue.log`,
+
+output will be 1 line:
+
+```
+combine_files concat.md list of files pertinent to the issue
+```
+
+### *Senior Developer*
+after the VLORI is failing not because of dependencies or other 
+libraries not passing tests, list of files created by the *Design 
+Liaison* along with the VLORI will be sent to the Senior-Dev to 
+suggest possible solutions.
+
+### *PL* - "Patch Liaison"
+
+Process the output of the senior dev, and manage a list of files for 
+the code merger interns to process by applying edits as described by 
+the senior dev. They give a grade on each patch of each intern.
+
+```
+rtrn_ptch_targets(patch, VLORI) - returns a list of targets for the patch intern commands
+patch_intern(patch, target)- returns the patched target *working!*
+```
+
+### *VLORI Developer*
+
+`issue.log` is regenerated with `run_and_log "./issue67.sh" "./issue67.log" "./devShells.nix"`
+
+SumIssueSumFile() is run on `issue.md` `issue.log`
+
+At this point a junior dev will make a list of candidates of files 
+causing the issue by processing the `issue.log`. SumIssueSumFile() 
+will be recursively run on files starting with the `issue.log`,
+
+output will be 1 line:
+
+```
+combine_files concat.md list of files pertinent to the issue
+```
 
 Process will restart at plan/review Liaison
+
+----------------------------------------------------------------------
+
+We’re shorthanded today usually there's 4 or 5 of us watching this guy work.
+
+https://www.youtube.com/shorts/kdjDy6D6ZbE
+
+if you pay close attention, the only Dev doing anything is the Senior-Dev.
+
+it is the job of all other devs, to either delegate to subtasks or do as little as possible.
+
+This is to keep transparency in the workflow, so the git commits can reflect the issue, i.e. a subtask to  commands or scripts to install or provide a support library is the name of the issue and matches the commit log for that patch.
 
 ----------------------------------------------------------------------
 
